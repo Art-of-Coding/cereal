@@ -18,6 +18,10 @@ export function registerType<T>(
 ): void {
   if (isNaN(type) || type < 0 || type > 255) {
     throw new TypeError(`Expected 'type' to be in range 0-255`)
+  } else if (typeof fns.serialize !== 'function') {
+    throw new TypeError(`Expected 'serialize' to be a function`)
+  } else if (typeof fns.deserialize !== 'function') {
+    throw new TypeError(`Expected 'deserialize' to be a function`)
   }
 
   registeredTypes.set(type, fns)
