@@ -1,6 +1,7 @@
 const registeredTypes = new Map<number, {
   serialize: (value: any) => Buffer,
-  deserialize: (value: Buffer) => any
+  deserialize: (value: Buffer) => any,
+  header?: (value: any) => Buffer,
 }>()
 
 /**
@@ -13,7 +14,7 @@ export function registerType<T>(
   type: number,
   fns: {
     serialize: (value: T) => Buffer,
-    deserialize: (value: Buffer) => T
+    deserialize: (value: Buffer) => T,
   }
 ): void {
   if (isNaN(type) || type < 0 || type > 255) {
@@ -38,12 +39,10 @@ export function getType(type: number) {
 
 export function buildHeader(
   type: number,
-  byteLength: number,
+  fn?: (value: any) => Buffer,
 ): Buffer {
-  const headerBuf = Buffer.allocUnsafe(5)
-
+  const headerBuf = Buffer.allocUnsafe(1)
   headerBuf[0] = type
-  headerBuf.writeInt32LE(byteLength, 1)
   return headerBuf
 }
 
@@ -69,7 +68,7 @@ export function serialize<T = any>(
     return valueBuf
   }
 
-  const headerBuf = buildHeader(type, valueBuf.byteLength)
+  const headerBuf = buildHeader(type)
   return Buffer.concat([headerBuf, valueBuf])
 }
 
@@ -82,5 +81,5 @@ export function deserialize<T = any>(value: Buffer): T {
   const registeredType = registeredTypes.get(value[0])
   if (!registeredType) throw new Error(`Unknown type '${value[0]}'`)
 
-  return registeredType.deserialize(value.slice(5))
+  return registeredType.deserialize(value.slice(1))
 }
