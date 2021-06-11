@@ -14,28 +14,52 @@ If you want to try it out, fork or clone the repository.
 
 Forthcoming. Use the example and the source code.
 
+### Supported types
+
+- Byte
+- Boolean
+- Int8
+- Int16
+- Int32
+- String
+
 ## Example
 
 ```ts
 import { deserialize, registerType, serialize } from "./index";
+import { Type } from "./types";
 
-enum Type {
-  String = 0,
+// Use one of the built-in types...
+const serialized = serialize(Type.String, "I am a sentence");
+const deserialized = deserialize(serialized);
+```
+
+```typescript
+// ... or create a custom type
+// numbers 0-99 are reserved for internal use
+// numbers 100-255 can safely be used
+enum CustomType {
+  Position = 100,
 }
 
-// Register a type which can serialize and deserialize strings
-registerType<string>(Type.String, {
-  serialize: (value) => Buffer.from(value, "utf-8"),
-  deserialize: (value) => value.toString("utf-8"),
+// and register the type
+registerType<[number, number]>(CustomType.Position, {
+  serialize: (value) => {
+    const buf = Buffer.allocUnsafe(8);
+    buf.writeInt32LE(value[0], 0);
+    buf.writeInt32LE(value[1], 4);
+    return buf;
+  },
+  deserialize: (value) => {
+    return [
+      value.readInt32LE(0),
+      value.readInt32LE(4),
+    ];
+  },
 });
 
-// Serialize a string type
-const serialized = serialize(Type.String, "I am a sentence");
-// Deserialize a previously serialized value
+const serialized = serialize(Type.Position, [11, 22]);
 const deserialized = deserialize(serialized);
-
-console.log(serialized);
-console.log(deserialized);
 ```
 
 ## License
