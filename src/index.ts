@@ -36,6 +36,17 @@ export function getType(type: number) {
   return registeredTypes.get(type)
 }
 
+export function buildHeader(
+  type: number,
+  byteLength: number,
+): Buffer {
+  const headerBuf = Buffer.allocUnsafe(5)
+
+  headerBuf[0] = type
+  headerBuf.writeInt32LE(byteLength, 1)
+  return headerBuf
+}
+
 /**
  * Serialize a value.
  * @param type The type id (0-255 inclusive)
@@ -44,17 +55,21 @@ export function getType(type: number) {
  */
 export function serialize<T = any>(
   type: number,
-  value: T
+  value: T,
+  opts: {
+    excludeHeader?: boolean,
+  } = {}
 ): Buffer {
   const registeredType = registeredTypes.get(type)
   if (!registeredType) throw new Error(`Unknown type '${type}'`)
 
-  const headerBuf = Buffer.allocUnsafe(5)
   const valueBuf = registeredType.serialize(value)
 
-  headerBuf[0] = type
-  headerBuf.writeInt32LE(valueBuf.byteLength, 1)
+  if (opts.excludeHeader) {
+    return valueBuf
+  }
 
+  const headerBuf = buildHeader(type, valueBuf.byteLength)
   return Buffer.concat([headerBuf, valueBuf])
 }
 
