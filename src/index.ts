@@ -1,7 +1,6 @@
 const registeredTypes = new Map<number, {
   serialize: (value: any) => Buffer,
   deserialize: (value: Buffer) => any,
-  header?: (value: any) => Buffer,
 }>()
 
 /**
